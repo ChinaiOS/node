@@ -1171,10 +1171,12 @@ void ContextifyContext::CompileFunction(
 
   // Argument 1: source code
   CHECK(args[0]->IsString());
+  // 要执行的代码
   Local<String> code = args[0].As<String>();
 
   // Argument 2: filename
   CHECK(args[1]->IsString());
+  // 对应的文件
   Local<String> filename = args[1].As<String>();
 
   // Argument 3: line offset
@@ -1261,6 +1263,7 @@ void ContextifyContext::CompileFunction(
   }
 
   // Read params from params buffer
+  // 形参
   std::vector<Local<String>> params;
   if (!params_buf.IsEmpty()) {
     for (uint32_t n = 0; n < params_buf->Length(); n++) {
@@ -1310,6 +1313,7 @@ ScriptCompiler::Source ContextifyContext::GetCommonJSSourceInstance(
     int column_offset,
     Local<PrimitiveArray> host_defined_options,
     ScriptCompiler::CachedData* cached_data) {
+  // 代码的元信息
   ScriptOrigin origin(isolate,
                       filename,
                       line_offset,     // line offset
@@ -1345,6 +1349,7 @@ Local<Object> ContextifyContext::CompileFunctionAndCacheResult(
     bool produce_cached_data,
     Local<Symbol> id_symbol,
     const TryCatchScope& try_catch) {
+  // 编译代码执行
   MaybeLocal<Function> maybe_fn = ScriptCompiler::CompileFunction(
       parsing_context,
       source,
@@ -1355,6 +1360,7 @@ Local<Object> ContextifyContext::CompileFunctionAndCacheResult(
       options,
       v8::ScriptCompiler::NoCacheReason::kNoCacheNoReason);
 
+  // 返回一个函数，函数里面的代码是传入的 code
   Local<Function> fn;
   if (!maybe_fn.ToLocal(&fn)) {
     if (try_catch.HasCaught() && !try_catch.HasTerminated()) {

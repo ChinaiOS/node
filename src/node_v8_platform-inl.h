@@ -84,7 +84,7 @@ class NodeTraceStateObserver
 struct V8Platform {
   bool initialized_ = false;
 
-#if
+#if NODE_USE_V8_PLATFORM
   // 我们可以通过命令后参数指定 thread_pool_size 大小，从而指定线程池大小
   inline void Initialize(int thread_pool_size) {
     CHECK(!initialized_);

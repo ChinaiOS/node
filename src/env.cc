@@ -694,7 +694,9 @@ void Environment::TryLoadAddon(
     const char* filename,
     int flags,
     const std::function<bool(binding::DLib*)>& was_loaded) {
+  // 创建一个 DLib 对象
   loaded_addons_.emplace_back(filename, flags);
+  // loaded_addons_.back() 拿到上面创建的 DLib 对象
   if (!was_loaded(&loaded_addons_.back())) {
     loaded_addons_.pop_back();
   }

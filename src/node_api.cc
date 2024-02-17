@@ -750,9 +750,10 @@ node_module napi_module_to_node_module(const napi_module* mod) {
       nullptr,
       mod->nm_filename,
       nullptr,
+      // addon_context_register_func
       napi_module_register_cb,
       mod->nm_modname,
-      const_cast<napi_module*>(mod),  // priv
+      const_cast<napi_module*>(mod),  // priv 保存 napi_module 结构体
       nullptr,
   };
 }

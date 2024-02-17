@@ -1137,17 +1137,22 @@ typedef void (*addon_context_register_func)(v8::Local<v8::Object> exports,
 
 enum ModuleFlags { kLinked = 0x02 };
 
+// C++ 模块的数据结构，比如内置 C++ 模块和 Addon 模块
 struct node_module {
   // 版本、标记的元信息
   int nm_version;
+  // 模块属性，比如类型
   unsigned int nm_flags;
+  // 打开动态链接库时返回的 handler
   void* nm_dso_handle;
+  // 文件
   const char* nm_filename;
-  // 注册模块的钩子函数
+  // 注册模块的钩子函数 钩子函数，不同钩子不同的签名格式
   node::addon_register_func nm_register_func;
   node::addon_context_register_func nm_context_register_func;
   // 模块名
   const char* nm_modname;
+  // 根据模块类型自定义的数据结构
   void* nm_priv;
   // 用于指向下一个节点
   struct node_module* nm_link;

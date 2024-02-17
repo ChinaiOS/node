@@ -115,15 +115,22 @@ class DLib {
 
   DLib(const char* filename, int flags);
 
+  // 打开一个动态链接库
   bool Open();
+  // 关闭一个动态链接库
   void Close();
+  // 根据名字获取动态链接库中的函数地址
   void* GetSymbolAddress(const char* name);
+
   void SaveInGlobalHandleMap(node_module* mp);
   node_module* GetSavedModuleFromGlobalHandleMap();
 
+  // 模块名
   const std::string filename_;
+  // 打开动态链接库时传入的 flags
   const int flags_;
   std::string errmsg_;
+  // 动态链接库的信息
   void* handle_;
 #ifndef __POSIX__
   uv_lib_t lib_;

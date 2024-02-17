@@ -447,7 +447,9 @@ void DLOpen(const FunctionCallbackInfo<Value>& args) {
     return;  // Exception pending.
   }
 
+  // 模块名
   node::Utf8Value filename(env->isolate(), args[1]);  // Cast
+  // 加载并执行回调
   env->TryLoadAddon(*filename, flags, [&](DLib* dlib) {
     static Mutex dlib_load_mutex;
     Mutex::ScopedLock lock(dlib_load_mutex);

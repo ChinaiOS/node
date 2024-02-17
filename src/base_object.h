@@ -202,6 +202,7 @@ class BaseObject : public MemoryRetainer {
   template <typename T, bool kIsWeak>
   friend class BaseObjectPtrImpl;
 
+  // 持久句柄，指向 JS 对象
   v8::Global<v8::Object> persistent_handle_;
 
   // Metadata that is associated with this BaseObject if there are BaseObjectPtr
