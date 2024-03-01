@@ -21,23 +21,29 @@ ReqWrap<T>::ReqWrap(Environment* env,
     : AsyncWrap(env, object, provider),
       ReqWrapBase(env) {
   MakeWeak();
+  // 初始化状态  
   Reset();
 }
 
 template <typename T>
 ReqWrap<T>::~ReqWrap() {}
 
+// 保存 Libuv 数据结构和 ReqWrap 实例的关系，发起请求时调用
 template <typename T>
 void ReqWrap<T>::Dispatched() {
+  // 保存 Libuv 结构体和 C++ 层对象 ConnectWrap 的关系    
   req_.data = this;
 }
 
+// 重置字段
 template <typename T>
 void ReqWrap<T>::Reset() {
+  // 由 Libuv 调用的 C++ 层回调
   original_callback_ = nullptr;
   req_.data = nullptr;
 }
 
+// 通过 req 成员找所属对象的地址
 template <typename T>
 ReqWrap<T>* ReqWrap<T>::from_req(T* req) {
   return ContainerOf(&ReqWrap<T>::req_, req);
@@ -105,6 +111,7 @@ struct CallLibuvFunction<ReqT, void(*)(ReqT*, Args...)> {
 // If not, the parameter is passed through verbatim.
 template <typename ReqT, typename T>
 struct MakeLibuvRequestCallback {
+  // 匹配第二个参数为非函数
   static T For(ReqWrap<ReqT>* req_wrap, T v) {
     static_assert(!is_callable<T>::value,
                   "MakeLibuvRequestCallback missed a callback");
@@ -118,25 +125,33 @@ template <typename ReqT, typename... Args>
 struct MakeLibuvRequestCallback<ReqT, void(*)(ReqT*, Args...)> {
   using F = void(*)(ReqT* req, Args... args);
 
+  // Libuv 回调
   static void Wrapper(ReqT* req, Args... args) {
+    // 通过 Libuv 结构体拿到对应的 C++ 对象
     BaseObjectPtr<ReqWrap<ReqT>> req_wrap{ReqWrap<ReqT>::from_req(req)};
     req_wrap->Detach();
     req_wrap->env()->DecreaseWaitingRequestCounter();
+    // 拿到原始的回调执行
     F original_callback = reinterpret_cast<F>(req_wrap->original_callback_);
     original_callback(req, args...);
   }
 
+  // 匹配第二个参数为函数
   static F For(ReqWrap<ReqT>* req_wrap, F v) {
     CHECK_NULL(req_wrap->original_callback_);
+    // 保存原来的函数
     req_wrap->original_callback_ =
         reinterpret_cast<typename ReqWrap<ReqT>::callback_t>(v);
+    // 返回包裹函数
     return Wrapper;
   }
 };
 
+// 调用 Libuv 函数
 template <typename T>
 template <typename LibuvFunction, typename... Args>
 int ReqWrap<T>::Dispatch(LibuvFunction fn, Args... args) {
+  // 关联 Libuv 结构体和 C++ 请求对象
   Dispatched();
   // This expands as:
   //
@@ -153,9 +168,11 @@ int ReqWrap<T>::Dispatch(LibuvFunction fn, Args... args) {
   //               Other (non-function) arguments are passed  -----/
   //               through verbatim
   int err = CallLibuvFunction<T, LibuvFunction>::Call(
+      // 执行 Libuv 函数
       fn,
       env()->event_loop(),
       req(),
+      // 由 Libuv 执行的回调，args 通常 handle，参数，回调
       MakeLibuvRequestCallback<T, Args>::For(this, args)...);
   if (err >= 0) {
     ClearWeak();

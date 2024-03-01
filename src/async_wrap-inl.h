@@ -71,12 +71,16 @@ inline v8::MaybeLocal<v8::Value> AsyncWrap::MakeCallback(
     int argc,
     v8::Local<v8::Value>* argv) {
   v8::Local<v8::Value> cb_v;
+  // 从对象中取出该 symbol 属性对应的值，值是个函数
+  // symbol 的值通常在 JS 层设置，比如 onread = xxx，oncomplete = xxx  
   if (!object()->Get(env()->context(), symbol).ToLocal(&cb_v))
     return v8::MaybeLocal<v8::Value>();
+  // 需要是个函数  
   if (!cb_v->IsFunction()) {
     v8::Isolate* isolate = env()->isolate();
     return Undefined(isolate);
   }
+  // 回调，见 async_wrap.cc  
   return MakeCallback(cb_v.As<v8::Function>(), argc, argv);
 }
 

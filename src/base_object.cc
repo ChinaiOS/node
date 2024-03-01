@@ -18,6 +18,7 @@ using v8::ValueDeserializer;
 using v8::WeakCallbackInfo;
 using v8::WeakCallbackType;
 
+// 把 JS 对象存储到 persistent_handle_ 中，需要的时候通过 object() 函数取出来
 BaseObject::BaseObject(Realm* realm, Local<Object> object)
     : persistent_handle_(realm->isolate(), object), realm_(realm) {
   CHECK_EQ(false, object.IsEmpty());
@@ -63,9 +64,11 @@ void BaseObject::MakeWeak() {
         // to mess with internal fields, since the JS object may have
         // transitioned into an invalid state.
         // Refs: https://github.com/nodejs/node/issues/18897
+        // 不再引用 JS 对象
         obj->persistent_handle_.Reset();
         CHECK_IMPLIES(obj->has_pointer_data(),
                       obj->pointer_data()->strong_ptr_count == 0);
+        // 执行 GC 逻辑，默认释放 BaseObject 对象内存
         obj->OnGCCollect();
       },
       WeakCallbackType::kParameter);

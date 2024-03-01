@@ -48,6 +48,7 @@ v8::Global<v8::Object>& BaseObject::persistent() {
 }
 
 
+// 获取 JS 对象  用于返回 JS 层使用的对象
 v8::Local<v8::Object> BaseObject::object() const {
   return PersistentToLocal::Default(env()->isolate(), persistent_handle_);
 }
@@ -91,9 +92,11 @@ void BaseObject::SetInternalFields(IsolateData* isolate_data,
                                    v8::Local<v8::Object> object,
                                    void* slot) {
   TagBaseObject(isolate_data, object);
+  // 把 this 存到 object中，BaseObject::kSlot 为 0
   object->SetAlignedPointerInInternalField(BaseObject::kSlot, slot);
 }
 
+// 通过 obj 取出里面保存的 BaseObject 对象 用于通过 JS 对象获取对应的 C++ 对象
 BaseObject* BaseObject::FromJSObject(v8::Local<v8::Value> value) {
   v8::Local<v8::Object> obj = value.As<v8::Object>();
   DCHECK_GE(obj->InternalFieldCount(), BaseObject::kInternalFieldCount);
@@ -101,6 +104,7 @@ BaseObject* BaseObject::FromJSObject(v8::Local<v8::Value> value) {
       obj->GetAlignedPointerFromInternalField(BaseObject::kSlot));
 }
 
+// T 为 BaseObject 子类
 template <typename T>
 T* BaseObject::FromJSObject(v8::Local<v8::Value> object) {
   return static_cast<T*>(FromJSObject(object));

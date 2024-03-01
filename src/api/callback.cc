@@ -212,6 +212,7 @@ MaybeLocal<Value> InternalMakeCallback(Environment* env,
     }
     ret = hook_cb->Call(context, recv, args.length(), &args[0]);
   } else {
+    // 执行 JS 层回调  
     ret = callback->Call(context, recv, argc, argv);
   }
 

@@ -54,11 +54,17 @@ class ExternalReferenceRegistry;
 //   js/c++ boundary crossing. At the javascript layer that should all be
 //   taken care of.
 
+// 对 Libuv uv_handle_t 结构体和操作的封装，也是很多 C++ 类的基类，比如 TCP、UDP
 class HandleWrap : public AsyncWrap {
  public:
+  // 操作和判断 handle 状态函数，对 Libuv 的封装
+  // 关闭 handle（JS 层调用） 
   static void Close(const v8::FunctionCallbackInfo<v8::Value>& args);
+  // 修改 handle 为活跃状态 
   static void Ref(const v8::FunctionCallbackInfo<v8::Value>& args);
+  // 修改 hande 为不活跃状态  
   static void Unref(const v8::FunctionCallbackInfo<v8::Value>& args);
+  // 判断 handle 是否处于活跃状态  
   static void HasRef(const v8::FunctionCallbackInfo<v8::Value>& args);
 
   static inline bool IsAlive(const HandleWrap* wrap) {
@@ -71,8 +77,10 @@ class HandleWrap : public AsyncWrap {
     return IsAlive(wrap) && uv_has_ref(wrap->GetHandle());
   }
 
+   // 获取封装的 handle  
   inline uv_handle_t* GetHandle() const { return handle_; }
 
+   // 关闭 handle，如果传入回调则在 close 阶段被执行  
   virtual void Close(
       v8::Local<v8::Value> close_callback = v8::Local<v8::Value>());
 
@@ -83,6 +91,7 @@ class HandleWrap : public AsyncWrap {
   static void RegisterExternalReferences(ExternalReferenceRegistry* registry);
 
  protected:
+  // 子类可实现
   HandleWrap(Environment* env,
              v8::Local<v8::Object> object,
              uv_handle_t* handle,
@@ -94,11 +103,14 @@ class HandleWrap : public AsyncWrap {
   void MarkAsInitialized();
   void MarkAsUninitialized();
 
+  // handle 状态  
   inline bool IsHandleClosing() const {
     return state_ == kClosing || state_ == kClosed;
   }
 
+  // 关闭 handle 成功后回调，Libuv 层执行  
   static void OnClose(uv_handle_t* handle);
+  // handle 的状态  
   enum { kInitialized, kClosing, kClosed } state_;
 
  private:
@@ -111,7 +123,9 @@ class HandleWrap : public AsyncWrap {
   // position of members in memory are predictable. For more information please
   // refer to `doc/contributing/node-postmortem-support.md`
   friend int GenDebugSymbols();
+  // handle 队列  
   ListNode<HandleWrap> handle_wrap_queue_;
+  // 所有 handle 的基类  指向子类的 handle 类结构体
   uv_handle_t* const handle_;
 };
 

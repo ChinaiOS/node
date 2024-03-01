@@ -36,9 +36,11 @@ class ReqWrap : public AsyncWrap, public ReqWrapBase {
   inline ~ReqWrap() override;
   // Call this after the req has been dispatched, if that did not already
   // happen by using Dispatch().
+  // 保存 Libuv 数据结构和 ReqWrap 实例的关系，发起请求时调用  
   inline void Dispatched();
   // Call this after a request has finished, if re-using this object is planned.
   inline void Reset();
+  // 获取 Libuv 请求结构体
   T* req() { return &req_; }
   inline void Cancel() final;
   inline AsyncWrap* GetAsyncWrap() override;
@@ -67,6 +69,7 @@ class ReqWrap : public AsyncWrap, public ReqWrapBase {
   // so req_wrap_queue_ would no longer be at a fixed offset if it came after
   // req_. For more information please refer to
   // `doc/contributing/node-postmortem-support.md`
+  // Libuv 请求结构体，类型由子类决定
   T req_;
 };
 

@@ -66,16 +66,22 @@ void HandleWrap::Close(const FunctionCallbackInfo<Value>& args) {
   HandleWrap* wrap;
   ASSIGN_OR_RETURN_UNWRAP(&wrap, args.Holder());
 
+  // 传入回调  
   wrap->Close(args[0]);
 }
 
+// 真正关闭 handle 的函数
 void HandleWrap::Close(Local<Value> close_callback) {
+  // 正在关闭或已经关闭  
   if (state_ != kInitialized)
     return;
 
+  // 调用 Libuv 函数  
   uv_close(handle_, OnClose);
+  // 关闭中
   state_ = kClosing;
 
+  // 传了 onclose 回调则保存起来，在 close 阶段后调用  
   if (!close_callback.IsEmpty() && close_callback->IsFunction() &&
       !persistent().IsEmpty()) {
     object()->Set(env()->context(),
@@ -132,6 +138,7 @@ HandleWrap::HandleWrap(Environment* env,
 }
 
 
+// 关闭 handle 成功后回调，Libuv 层执行
 void HandleWrap::OnClose(uv_handle_t* handle) {
   CHECK_NOT_NULL(handle->data);
   BaseObjectPtr<HandleWrap> wrap { static_cast<HandleWrap*>(handle->data) };
@@ -145,7 +152,9 @@ void HandleWrap::OnClose(uv_handle_t* handle) {
 
   wrap->state_ = kClosed;
 
+  // 执行子类的 onClose，如果没有则是空操作
   wrap->OnClose();
+  // 有 JS 层 onclose 回调则执行  
   wrap->handle_wrap_queue_.Remove();
 
   if (!wrap->persistent().IsEmpty() &&

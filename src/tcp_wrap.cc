@@ -76,7 +76,9 @@ void TCPWrap::Initialize(Local<Object> target,
   Environment* env = Environment::GetCurrent(context);
   Isolate* isolate = env->isolate();
 
+  // 创建一个函数模版
   Local<FunctionTemplate> t = NewFunctionTemplate(isolate, New);
+  // 可关联的 C++ 对象个数
   t->InstanceTemplate()->SetInternalFieldCount(StreamBase::kInternalFieldCount);
 
   // Init properties
@@ -87,6 +89,7 @@ void TCPWrap::Initialize(Local<Object> target,
 
   t->Inherit(LibuvStreamWrap::GetConstructorTemplate(env));
 
+  // 设置原型方法
   SetProtoMethod(isolate, t, "open", Open);
   SetProtoMethod(isolate, t, "bind", Bind);
   SetProtoMethod(isolate, t, "listen", Listen);
@@ -109,6 +112,7 @@ void TCPWrap::Initialize(Local<Object> target,
   SetProtoMethod(isolate, t, "setSimultaneousAccepts", SetSimultaneousAccepts);
 #endif
 
+  // 函数名
   SetConstructorFunction(context, target, "TCP", t);
   env->set_tcp_constructor_template(t);
 
@@ -123,6 +127,7 @@ void TCPWrap::Initialize(Local<Object> target,
   NODE_DEFINE_CONSTANT(constants, SOCKET);
   NODE_DEFINE_CONSTANT(constants, SERVER);
   NODE_DEFINE_CONSTANT(constants, UV_TCP_IPV6ONLY);
+  // 根据函数模块导出一个函数到 JS 层
   target->Set(context,
               env->constants_string(),
               constants).Check();
@@ -320,6 +325,7 @@ void TCPWrap::Connect(const FunctionCallbackInfo<Value>& args,
   Environment* env = Environment::GetCurrent(args);
 
   TCPWrap* wrap;
+  // 从 JS 对象拿到关联的 C++ 对象
   ASSIGN_OR_RETURN_UNWRAP(&wrap,
                           args.Holder(),
                           args.GetReturnValue().Set(UV_EBADF));
@@ -327,6 +333,7 @@ void TCPWrap::Connect(const FunctionCallbackInfo<Value>& args,
   CHECK(args[0]->IsObject());
   CHECK(args[1]->IsString());
 
+  // 第一个参数是 TCPConnectWrap 对象
   Local<Object> req_wrap_obj = args[0].As<Object>();
   node::Utf8Value ip_address(env->isolate(), args[1]);
 
@@ -335,8 +342,10 @@ void TCPWrap::Connect(const FunctionCallbackInfo<Value>& args,
 
   if (err == 0) {
     AsyncHooks::DefaultTriggerAsyncIdScope trigger_scope(wrap);
+    // 创建一个对象请求 Libuv
     ConnectWrap* req_wrap =
         new ConnectWrap(env, req_wrap_obj, AsyncWrap::PROVIDER_TCPCONNECTWRAP);
+    // 从 C++ 对象 TCPWrap 中获得 Libuv 的 handle 结构体
     err = req_wrap->Dispatch(uv_tcp_connect,
                              &wrap->handle_,
                              reinterpret_cast<const sockaddr*>(&addr),
